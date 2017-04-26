@@ -27,15 +27,20 @@ def brute_force_nearest_neighbor(points):
     # Select another point...do the same thing
     # return the minimum distance
 
-    for selected_point in points:
-        for other_point in points:
-            if selected_point != other_point:
-                distance = dist(selected_point, other_point)
+    for selected_point in range(len(points)):
+        #print(points[selected_point])
+        other_point = selected_point +1
+        while other_point < len(points):
+        #for other_point in range(len(points)):
+           # if selected_point != other_point:
+            distance = dist(points[selected_point], points[other_point])
 
             if min_distance == 0:
                 min_distance = distance;
             elif distance < min_distance:
                 min_distance = distance
+
+            other_point+=1
     return min_distance
 
 def nearest_neighbor_recursion(points):
@@ -43,7 +48,9 @@ def nearest_neighbor_recursion(points):
     left_distance=0
     right_distance=0
     window_distance=0
-    x_midpoint = len(points)/2
+    kay = 0
+    eye = 0
+    x_midpoint = int(len(points)/2)
     L = points[:x_midpoint]
     R = points[x_midpoint:]
 
@@ -59,26 +66,46 @@ def nearest_neighbor_recursion(points):
             min_distance = right_distance
         else:
             min_distance = left_distance
-           # This is where sliding window happens
-   # Begin by removing x values outside of boundaries
+   # This is where sliding window happens
+   # Calculate left and right boundaries
+    left_boundary = (x_midpoint - min_distance)
+    right_boundary = (x_midpoint + min_distance)
+
+    # Remove values outside of boundaries
     for i in L:
-        if i[0] < x_midpoint - min_distance:
+        if i[0] < left_boundary:
             L.remove(i)
+        else:
+            break
     for i in R:
-        if i[0] > x_midpoint + min_distance:
+        if i[0] > right_boundary:
             R.remove(i)
     #sort L and R by y values
-    # R.sort(key=lambda R:R[1])
-    # L.sort(key = lambda L:L[1])
-    window_points = L + R
-    window_points.sort(key=lambda window_points:window_points[1])
-    #Sliding Window Time
-    window_distance = min_distance
-    while (len(window_points) != 0):
-        window_distance = brute_force_nearest_neighbor(window_points[:8])
-        if window_distance < min_distance:
-            min_distance = window_distance
-        window_points.remove(window_points[0])
+    R.sort(key=lambda R:R[1])
+    L.sort(key = lambda L:L[1])
+    #window_points = L + R
+    #window_points.sort(key=lambda window_points:window_points[1])
+
+    # Sliding Window Time
+    # We can check L against values in R
+    #window_distance = min_distance
+    #while (len(window_points) != 0):
+    #    window_distance = brute_force_nearest_neighbor(window_points[:8])
+    #    if window_distance < min_distance:
+    #        min_distance = window_distance
+    #    window_points.remove(window_points[0])
+    # NEW CODE
+    window_boundary = (x_midpoint - left_boundary)
+    for i in L:
+        eye = i[1]
+        for k in R:
+            kay = k[1]
+            if (kay < (eye + window_boundary)) and (kay > (eye - window_boundary)):
+                window_distance = dist(k,i)
+                if window_distance < min_distance:
+                    min_distance = window_distance
+            else:
+                continue
 
 
 
@@ -116,16 +143,16 @@ def main(filename,algorithm):
         start=timeit.default_timer()
         print("Brute Force: ", brute_force_nearest_neighbor(points))
         stop=timeit.default_timer()
-        print stop - start
+        print (stop - start)
     if algorithm == 'both':
         start=timeit.default_timer()
         print("Divide and Conquer: ", nearest_neighbor(points))
         stop=timeit.default_timer()
-        print "DC Time:", (stop - start)
+        print ("DC Time:", (stop - start))
         start=timeit.default_timer()
         print("Brute Force: ", brute_force_nearest_neighbor(points))
         stop=timeit.default_timer()
-        print "BF Time", (stop - start)
+        print ("BF Time", (stop - start))
 if __name__ == '__main__':
     if len(sys.argv) < 3:
         print("python assignment1.py -<dc|bf|both> <input_file>")
