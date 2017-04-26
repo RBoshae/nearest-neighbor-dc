@@ -45,12 +45,11 @@ def nearest_neighbor_recursion(points):
     left_distance=0
     right_distance=0
     window_distance=0
-    kay = 0
-    eye = 0
     x_midpoint = int(len(points)/2)
     L = points[:x_midpoint]
     R = points[x_midpoint:]
     R_New = []
+    L_New = []
 
 
     if len(points) <= 3:              # divide and conquer until we reach out base case of just three points
@@ -64,17 +63,20 @@ def nearest_neighbor_recursion(points):
             min_distance = right_distance
         else:
             min_distance = left_distance
+
    # This is where sliding window happens
    # Calculate left and right boundaries
     left_boundary = (x_midpoint - min_distance)
     right_boundary = (x_midpoint + min_distance)
 
     # Remove values outside of boundaries
-    for i in L:
-        if  float(i[0]) < left_boundary:
-            L.remove(i)
-        else:
-            break
+    for i in range(len(L)):
+        #if  i[0] < left_boundary:
+        #    L.remove(i)
+        if L[i][0] > left_boundary:
+            L_New.append(L[i])
+        # else:
+        #    break
     for i in range(len(R)):
       #  if i[0] > right_boundary:
       #      R.remove(i) #Possible: create new list and append
@@ -82,22 +84,22 @@ def nearest_neighbor_recursion(points):
             R_New.append(R[i])
         else:
             break
-    R = R_New #ADDED HERE
-    #sort L and R by y values
-    ##R.sort(key=lambda R:R[1])
-    ##L.sort(key = lambda L:L[1])
-    window_points = L + R
+    window_points = L_New + R_New
     window_points.sort(key=lambda window_points:window_points[1])
 
     # Sliding Window Time
-    # We can check L against values in R
     window_distance = min_distance
     #print("Window Distance", window_distance)
-    while (len(window_points) != 1):
-        window_distance = brute_force_nearest_neighbor(window_points[0:7])
-        if window_distance < min_distance:
+    i = 0
+    while (i < len(window_points)):
+        if ((i + 7) < len(window_points)):
+            window_distance = brute_force_nearest_neighbor(window_points[i:(i+7)])
+        else:
+            window_distance = brute_force_nearest_neighbor(window_points[i:])
+
+        if window_distance < min_distance and window_distance != 0:
              min_distance = window_distance
-        window_points.remove(window_points[0])
+        i= i+1
 
     '''
     # NEW CODE
