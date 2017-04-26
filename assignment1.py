@@ -9,30 +9,27 @@ pointRE=re.compile("(-?\\d+.?\\d*)\\s(-?\\d+.?\\d*)")
 def dist(p1, p2):
     return sqrt(pow(p1[0]-p2[0],2) + pow(p1[1]-p2[1],2))
 
-#Run the divide-and-conquor nearest neighbor
+# Run the divide-and-conquor nearest neighbor
 def nearest_neighbor(points):
 
-    #points.sort will implicitly assign sorted version of points.
+    # points.sort will implicitly assign sorted version of points.
     points.sort(key=lambda points:points[0])
-    #print "Sorted Points"
-    #print points
+
     return nearest_neighbor_recursion(points)
 
-#Brute force version of the nearest neighbor algorithm, O(n**2)
+# Brute force version of the nearest neighbor algorithm, O(n**2)
 def brute_force_nearest_neighbor(points):
     min_distance = 0
     distance = 0
+
     # Select a point
-    # get the minimum distance of the selected point from all other points
-    # Select another point...do the same thing
+    # Get the minimum distance of the selected point from all other points
+    # Select the next point...do the same thing
     # return the minimum distance
 
     for selected_point in range(len(points)):
-        #print(points[selected_point])
         other_point = selected_point +1
-        while other_point < len(points):
-        #for other_point in range(len(points)):
-           # if selected_point != other_point:
+        while (other_point < len(points)):
             distance = dist(points[selected_point], points[other_point])
 
             if min_distance == 0:
@@ -53,6 +50,7 @@ def nearest_neighbor_recursion(points):
     x_midpoint = int(len(points)/2)
     L = points[:x_midpoint]
     R = points[x_midpoint:]
+    R_New = []
 
 
     if len(points) <= 3:              # divide and conquer until we reach out base case of just three points
@@ -73,45 +71,60 @@ def nearest_neighbor_recursion(points):
 
     # Remove values outside of boundaries
     for i in L:
-        if i[0] < left_boundary:
+        if  float(i[0]) < left_boundary:
             L.remove(i)
         else:
             break
-    for i in R:
-        if i[0] > right_boundary:
-            R.remove(i)
+    for i in range(len(R)):
+      #  if i[0] > right_boundary:
+      #      R.remove(i) #Possible: create new list and append
+        if R[i][0] < right_boundary:
+            R_New.append(R[i])
+        else:
+            break
+    R = R_New #ADDED HERE
     #sort L and R by y values
-    R.sort(key=lambda R:R[1])
-    L.sort(key = lambda L:L[1])
-    #window_points = L + R
-    #window_points.sort(key=lambda window_points:window_points[1])
+    ##R.sort(key=lambda R:R[1])
+    ##L.sort(key = lambda L:L[1])
+    window_points = L + R
+    window_points.sort(key=lambda window_points:window_points[1])
 
     # Sliding Window Time
     # We can check L against values in R
-    #window_distance = min_distance
-    #while (len(window_points) != 0):
-    #    window_distance = brute_force_nearest_neighbor(window_points[:8])
-    #    if window_distance < min_distance:
-    #        min_distance = window_distance
-    #    window_points.remove(window_points[0])
+    window_distance = min_distance
+    #print("Window Distance", window_distance)
+    while (len(window_points) != 1):
+        window_distance = brute_force_nearest_neighbor(window_points[0:7])
+        if window_distance < min_distance:
+             min_distance = window_distance
+        window_points.remove(window_points[0])
+
+    '''
     # NEW CODE
+    print("Sliding Window Starts Now")
+    print("Current min: ", min_distance)
+    tracker = 0
     window_boundary = (x_midpoint - left_boundary)
-    for i in L:
-        eye = i[1]
-        for k in R:
-            kay = k[1]
-            if (kay < (eye + window_boundary)) and (kay > (eye - window_boundary)):
-                window_distance = dist(k,i)
+    print("wind_boundary: ", window_boundary)
+    for i in range(len(L)):
+    #    eye = i[1]
+
+        for k in range(len(R)):
+    #        kay = k[1]
+    #        k = tracker
+            # if R's y value is within the L's y boundary then check the distance
+            if (R[k][1] <= (L[i][1] + window_boundary)) and (R[k][1] >= (L[i][1] - window_boundary)):
+                window_distance = dist(R[k],L[i])
+                # compare the distance of L y and R y
                 if window_distance < min_distance:
                     min_distance = window_distance
+            # if the R y valyes is above the boundary break
+            elif R[k][1] > (L[i][1] + window_boundary) and k >0:
+     #           tracker = k - 2
+                break
             else:
                 continue
-
-
-
-
-
-
+    '''
     return min_distance
 
 def read_file(filename):
