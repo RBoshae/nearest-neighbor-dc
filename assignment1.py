@@ -6,26 +6,24 @@ import timeit
 
 pointRE=re.compile("(-?\\d+.?\\d*)\\s(-?\\d+.?\\d*)")
 
+# Perfect
 def dist(p1, p2):
     return sqrt(pow(p1[0]-p2[0],2) + pow(p1[1]-p2[1],2))
 
 # Run the divide-and-conquor nearest neighbor
+# Perfect
 def nearest_neighbor(points):
 
-    # points.sort will implicitly assign sorted version of points.
+    # Sort the points by x-values.
     points.sort(key=lambda points:points[0])
 
     return nearest_neighbor_recursion(points)
 
+# Perfect
 # Brute force version of the nearest neighbor algorithm, O(n**2)
 def brute_force_nearest_neighbor(points):
     min_distance = 0
     distance = 0
-
-    # Select a point
-    # Get the minimum distance of the selected point from all other points
-    # Select the next point...do the same thing
-    # return the minimum distance
 
     for selected_point in range(len(points)):
         other_point = selected_point +1
@@ -42,49 +40,78 @@ def brute_force_nearest_neighbor(points):
 
 def nearest_neighbor_recursion(points):
     min_distance=0
-    left_distance=0
-    right_distance=0
     window_distance=0
-    x_midpoint = int(len(points)/2)
-    L = points[:x_midpoint]
-    R = points[x_midpoint:]
     R_New = []
     L_New = []
 
+    # If points is contains more than three points we want to use recurstion to divide-and-conquor again
+    if len(points) > 3:
+        # Find the midpoint along the x-axis
+        x_midpoint = math.ceil(len(points)/2)
 
-    if len(points) <= 3:              # divide and conquer until we reach out base case of just three points
+        # Divide points into to regions, L and R
+        L = points[:x_midpoint]
+        R = points[x_midpoint:]
+
+        L_min_distance = nearest_neighbor_recursion(L)
+        R_min_distance = nearest_neighbor_recursion(R)
+
+        if L_min_distance > R_min_distance:
+            min_distance = R_min_distance
+        else:
+            min_distance = L_min_distance
+    # else if the number of points is less than three calc the distance
+    else:
        min_distance =  brute_force_nearest_neighbor(points)
        return min_distance
-    else:
-        left_distance = nearest_neighbor_recursion(L)
-        right_distance = nearest_neighbor_recursion(R)
 
-        if left_distance > right_distance:
-            min_distance = right_distance
-        else:
-            min_distance = left_distance
-
-   # This is where sliding window happens
+   # Sliding Window
    # Calculate left and right boundaries
-    left_boundary = (x_midpoint - min_distance)
-    right_boundary = (x_midpoint + min_distance)
+    L_boundary = (x_midpoint - min_distance)
+    R_boundary = (x_midpoint + min_distance)
 
-    # Remove values outside of boundaries
-    for i in range(len(L)):
-        #if  i[0] < left_boundary:
-        #    L.remove(i)
-        if L[i][0] > left_boundary:
+    # Create a new R and L with only points within the window
+    for i in range(len(L)-1,0,-1):
+        if L[i][0] >= L_boundary:
             L_New.append(L[i])
-        # else:
-        #    break
+        else:
+            break
+
     for i in range(len(R)):
-      #  if i[0] > right_boundary:
-      #      R.remove(i) #Possible: create new list and append
-        if R[i][0] < right_boundary:
+        if R[i][0] <= R_boundary:
             R_New.append(R[i])
         else:
             break
-    window_points = L_New + R_New
+
+    # Sort R_New and L_New by y values
+    L_New.sort(key=lambda L_New:L_New[1])
+    R_New.sort(key=lambda R_New:R_New[1])
+
+
+    # The hard part
+    k_init = 0
+    window_boundary = min_distance
+    for h in range(len(L_New)):
+        #print("h value", h)
+        k = k_init
+        while (k < len(R_New)):
+            #print("k ",k, "L", L_New[h][1], "lb", (L_New[h][1] - window_boundary),"R Value", R_New[k][1], "ub", (L_New[h][1] + window_boundary))
+            if(float(L_New[h][1] - window_boundary) <= R_New[k][1] and R_New[k][1] <= float(L_New[h][1] + window_boundary)):
+                window_distance = dist(L_New[h], R_New[k])
+                #print("Window Distance", window_distance)
+                if window_distance < min_distance:
+                    min_distance = window_distance
+            elif R_New[k][1] > (L_New[h][1] + window_boundary) and k > 0:
+            #    print("A")
+                k_init = k - 1
+                break
+            k = k + 1
+            #print(k)
+
+
+
+    '''
+    window_points = L_New + R_New:
     window_points.sort(key=lambda window_points:window_points[1])
 
     # Sliding Window Time
@@ -100,35 +127,10 @@ def nearest_neighbor_recursion(points):
         if window_distance < min_distance and window_distance != 0:
              min_distance = window_distance
         i= i+1
-
-    '''
-    # NEW CODE
-    print("Sliding Window Starts Now")
-    print("Current min: ", min_distance)
-    tracker = 0
-    window_boundary = (x_midpoint - left_boundary)
-    print("wind_boundary: ", window_boundary)
-    for i in range(len(L)):
-    #    eye = i[1]
-
-        for k in range(len(R)):
-    #        kay = k[1]
-    #        k = tracker
-            # if R's y value is within the L's y boundary then check the distance
-            if (R[k][1] <= (L[i][1] + window_boundary)) and (R[k][1] >= (L[i][1] - window_boundary)):
-                window_distance = dist(R[k],L[i])
-                # compare the distance of L y and R y
-                if window_distance < min_distance:
-                    min_distance = window_distance
-            # if the R y valyes is above the boundary break
-            elif R[k][1] > (L[i][1] + window_boundary) and k >0:
-     #           tracker = k - 2
-                break
-            else:
-                continue
     '''
     return min_distance
 
+# Perfect
 def read_file(filename):
     points=[]
     # File format
@@ -146,14 +148,22 @@ def read_file(filename):
    # print(points)
     return points
 
+# Perfect
 def main(filename,algorithm):
     algorithm=algorithm[1:]
     points=read_file(filename)
     if algorithm =='dc':
         start=timeit.default_timer()
-        print("Divide and Conquer: ", nearest_neighbor(points))
+        nn = nearest_neighbor(points)
+        print("Divide and Conquer: ", nn)
         stop=timeit.default_timer()
         print (stop - start)
+
+        # Print to file
+        output_filename = re.sub('.txt', '_distance.txt', filename)
+        f = open(output_filename, 'w')
+        f.write(str(nn))  # or f.write('...\n')
+        f.close()
     if algorithm == 'bf':
         start=timeit.default_timer()
         print("Brute Force: ", brute_force_nearest_neighbor(points))
@@ -161,9 +171,15 @@ def main(filename,algorithm):
         print (stop - start)
     if algorithm == 'both':
         start=timeit.default_timer()
-        print("Divide and Conquer: ", nearest_neighbor(points))
+        nn = nearest_neighbor(points)
+        print("Divide and Conquer: ", nn)
         stop=timeit.default_timer()
         print ("DC Time:", (stop - start))
+        # Print to file
+        output_filename = re.sub('.txt', '_distance.txt', filename)
+        f = open(output_filename, 'w')
+        f.write(str(nn))  # or f.write('...\n')
+        f.close()
         start=timeit.default_timer()
         print("Brute Force: ", brute_force_nearest_neighbor(points))
         stop=timeit.default_timer()
